@@ -1,12 +1,14 @@
 #!/usr/bin/python
-import os, sys, logging
+import os
+import sys
+import logging
 from utils.signal import Signal
 from fw.fw import Firewall
 
 fw_name = 'main-fw'
 
 # Logging setup
-log_level = logging.DEBUG	
+log_level = logging.DEBUG
 logger = logging.getLogger('hooks-qemu')
 fh = logging.FileHandler('/var/log/libvirt/hooks-qemu.log')
 frmt = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -15,26 +17,26 @@ frmt = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger.setLevel(log_level)
 fh.setLevel(log_level)
 fh.setFormatter(frmt)
-logger.addHandler(fh)	
+logger.addHandler(fh)
 
-if __name__ == "__main__": 
-	logger.debug("Started qemu hook")
-	vir_domain, action = sys.argv[1:3]
+if __name__ == "__main__":
+    logger.debug("Started qemu hook")
+    vir_domain, action = sys.argv[1:3]
 
-	fw = Firewall(fw_name, vir_domain)
-	
-	# Signaling data
-	signaling = { 'start': Signal(), 'stop': Signal(), 'reconnect': Signal() }
+    fw = Firewall(fw_name, vir_domain)
 
-	for k,v in signaling.items():
-		''' Get signal for all objects '''
-		mfw = getattr(fw, k)
-		''' Connect all signals with their respective '''
-		v.connect(mfw)
+    # Signaling data
+    signaling = {'start': Signal(), 'stop': Signal(), 'reconnect': Signal()}
 
-	logger.debug(action + " triggered... Sending signals")
+    for k, v in signaling.items():
+        ''' Get signal for all objects '''
+        mfw = getattr(fw, k)
+        ''' Connect all signals with their respective '''
+        v.connect(mfw)
 
-	if action in ["stopped", "reconnect"]:
-		signaling['stop'].fire()
-	if action in ["start", "reconnect"]:
-		signaling['start'].fire()
+    logger.debug(action + " triggered... Sending signals")
+
+    if action in ["stopped", "reconnect"]:
+        signaling['stop'].fire()
+    if action in ["start", "reconnect"]:
+        signaling['start'].fire()
